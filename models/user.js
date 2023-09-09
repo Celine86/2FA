@@ -8,10 +8,13 @@ module.exports = (sequelize, DataTypes) => {
     }
   };
   User.init({
-    id: { type: DataTypes.UUID, allowNull: false, defaultValue: Sequelize.UUIDV4, primaryKey: true},
+    id: {type: DataTypes.UUID, allowNull: false, defaultValue: Sequelize.UUIDV4, primaryKey: true },
     username: { type: DataTypes.STRING, allowNull: false, unique: true },
-    password: {  type: DataTypes.STRING, allowNull: false },
-    
+    email: { type: DataTypes.STRING, allowNull: false, unique: true },
+    password: { type: DataTypes.STRING, allowNull: false },
+    lastActive: { type: DataTypes.STRING },
+    active: { type: DataTypes.BOOLEAN },
+    otp: { type: DataTypes.STRING },
   }, {
     sequelize,
     modelName: 'User',
