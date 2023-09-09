@@ -40,16 +40,12 @@ exports.login = async (req, res, next) => {
       if (!hashed) {
         return res.status(401).json({ error: "Le mot de passe est incorrect !" });
       } else {
-        if (user.status === true) {
             res.status(200).json({
               message: "Vous êtes connecté",
               username: user.username,
               userId: user.id,
               token: jwt.sign({userId: user.id}, process.env.TOKEN, {expiresIn: '24h'}),
           })
-        } else {
-          return res.status(401).json({ error: "Vous êtes temporairement banni" });
-        }
       }
     }
   } catch (error) {
