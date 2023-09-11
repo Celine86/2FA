@@ -14,7 +14,7 @@ db.sequelize.sync()
 
 // Sync Tables and force modifications 
 // Note, set force to true if error "Too many keys specified; max 64 keys allowed"
-// db.sequelize.sync({ alter: true, force: false })
+//db.sequelize.sync({ alter: true, force: false })
 
 const express = require('express'); 
 const app = express();
