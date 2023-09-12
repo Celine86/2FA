@@ -1,10 +1,8 @@
 const db = require("../models"); 
-const { Op } = require("sequelize");
+const { Op, DATE } = require("sequelize");
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
-//const auth = require("../middleware/auth");
 require('dotenv').config();
-//const fs = require("fs");
 const xss = require("xss");
 const nodemailer = require('nodemailer');
 
@@ -47,57 +45,61 @@ exports.signup = async (req, res, next) => {
 };
 
 exports.login = async (req, res, next) => {
-  const user = await db.User.findOne({ where: {email: req.body.email} });
-  if (user) {
-    try {
-      const { email } = req.body;
-        // Generate a new OTP code and send it via email
-      this.otpCode = Math.floor(100000 + Math.random() * 900000);
-
-      user.otp = this.otpCode
-      await user.save({ fields: ["otp"],});
-
-        const mailOptions = {
-        from: process.env.MAIL_ACCOUNT,
-        to: email,
-        subject: "OTP",
-        text: `Ton code : ${this.otpCode}.`,
-      };
-    transporter.sendMail(mailOptions, (error, _info) => {
-      if (error) {
-        console.error('Error sending email: ', error);
-        res.status(500).send({ message: 'Failed to send OTP' });
+  try {
+    const user = await db.User.findOne({
+      where: {email: req.body.email},
+    });    
+  if (user === null) {
+    return res.status(401).json({ error: "Connexion impossible, merci de vérifier votre login" });
+    } else {
+      const hashed = await bcrypt.compare(req.body.password, user.password);
+      if (!hashed) {
+        return res.status(401).json({ error: "Le mot de passe est incorrect !" });
       } else {
-        console.log('OTP sent: ', this.otpCode);
-        res.status(200).send({ message: 'OTP sent successfully' });
-      }
-    });
-    } catch (error) {
-      return res.status(500).json({ error: "Erreur Serveur" });
-    }
-  }  else {
-    res.status(401).send({ message: 'Enter e-mail' });
+        const { email } = req.body;
+        this.otpCode = Math.floor(100000 + Math.random() * 900000);
+        // Le code OTP expire au bout de 5 minutes 
+        const expires = new Date(Date.now() + 5*60*1000);
+        user.otp = this.otpCode;
+        user.otpcreated = Date.now();
+        user.otpexpires = expires;
+        await user.save({ fields: ["otp", "otpcreated", "otpexpires"],});
+          const mailOptions = {
+          from: process.env.MAIL_ACCOUNT,
+          to: email,
+          subject: "OTP",
+          text: `Ton code OTP : ${this.otpCode}.`,
+        };
+        transporter.sendMail(mailOptions, (error, _info) => {
+          if (error) {
+            res.status(500).send({ message: 'Le code otp n\'a pas pu être envoyé' });
+          } else {
+            res.status(200).send({ message: 'Code OTP envoyé' });
+          }
+        });
+      } 
+    } 
+  } catch (error) {
+    return res.status(500).json({ error: "Erreur Serveur" });
   }
 };
 
 exports.verifyotp = async (req, res, next) => {
   const user = await db.User.findOne({ where: {email: req.body.email}, });
   const thisotp = await db.User.findOne({
-    attributes: ["otp"], 
+    attributes: ["otp", "otpcreated", "otpexpires"], 
     where: {email: req.body.email}, 
     raw: true,
   });
-
-  //const thisotp2 = JSON.stringify(thisotp);
-  //const thisotp3 = JSON.parse(thisotp2);
-
-  const thisotp2 = thisotp.otp;
-
-
-  console.log(thisotp2);
-
+  const thisotpverify = thisotp.otp;
+  const thisotpexpires = thisotp.otpexpires;
+  /* Transformation de la date d'expiration du code OTP récupéré en BDD 
+  en nombre de milisecondes écoulées depuis le 1er janvier 1970 afin de comparer cela à ce que renvoie la fonction Date.now() */
+  const dateotp = new Date(thisotpexpires)
+  const datenowtocompare = dateotp.getTime();
+  const datenow = Date.now();  
   const { otp } = req.body;
-  if (otp === thisotp2 && otp!=0) {
+  if (otp === thisotpverify && otp!=0 && datenowtocompare > datenow) {
     res.status(200).json({
       message: "Vous êtes connecté !",
       username: user.username,
@@ -106,32 +108,6 @@ exports.verifyotp = async (req, res, next) => {
       token: jwt.sign({userId: user.id}, process.env.TOKEN, {expiresIn: '24h'}),
   })
   } else {
-    res.status(401).send({ message: 'Invalid OTP' });
+    res.status(401).send({ message: 'Code OTP Invalide' });
   }
 };
-
-/*
-exports.login = async (req, res, next) => {
-  try {
-    const user = await db.User.findOne({ where: {email: req.body.email} });
-    if (user === null) {
-      return res.status(401).json({ error: "Connexion impossible, merci de vérifier votre login" });
-    } else {
-      const hashed = await bcrypt.compare(req.body.password, user.password);
-      if (!hashed) {
-        return res.status(401).json({ error: "Le mot de passe est incorrect !" })
-      } else {
-          res.status(200).json({
-              message: "Vous êtes connecté !",
-              username: user.username,
-              email: user.email,
-              userId: user.id,
-              token: jwt.sign({userId: user.id}, process.env.TOKEN, {expiresIn: '24h'}),
-          })
-      }
-    }
-  } catch (error) {
-    return res.status(500).json({ error: "Erreur Serveur" });
-  }
-};
-*/

@@ -12,7 +12,6 @@ function firstAdmin(req, res) {
               username: "liline57",
               email: "liline57@gmail.com",
               password: hash,
-              //otp: null,
             })
               .then((account) => {
                 console.log(`Le compte ${account.username} a été créé!`)

@@ -1,9 +1,5 @@
-// Create and Sync Tables 
-
 const db = require("./models/index");
 db.sequelize.sync()
-
-// Create Admin, Modo and User account
 
 .then(function () {
   require("./seeders/account");
@@ -18,7 +14,6 @@ db.sequelize.sync()
 
 const express = require('express'); 
 const app = express();
-const path = require("path");
 
 app.use((req, res, next) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
