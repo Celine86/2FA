@@ -26,7 +26,7 @@ function firstAdmin(req, res) {
             res.status(500).send({ error });
           });
       } else {
-        console.log("le compte test existe déjà");
+        console.log("le compte existe déjà");
       }
     })
     .catch((error) => {
