@@ -3,14 +3,14 @@ const bcrypt = require("bcrypt");
 require('dotenv').config();
 
 function firstAdmin(req, res) {
-  db.User.findOne({ where: { username: "liline57" } })
+  db.User.findOne({ where: { username: process.env.ACCOUNT_USERNAME } })
     .then((user) => {
       if (!user) {
         bcrypt.hash(process.env.PASSWORD, 10)
           .then((hash) => {
             db.User.create({
-              username: "liline57",
-              email: "liline57@gmail.com",
+              username: process.env.ACCOUNT_USERNAME,
+              email: process.env.ACCOUNT_EMAIL,
               password: hash,
             })
               .then((account) => {
