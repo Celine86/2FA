@@ -6,8 +6,9 @@
 - Sequelize 
 
 ## Install
-Create a database
-Clone repository
+Create a database  
+Clone repository  
+Change env-example with your informations  
 ``` npm install ```  
 ``` npm start ```  
 
