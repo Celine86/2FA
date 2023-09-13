@@ -6,7 +6,7 @@ function firstAdmin(req, res) {
   db.User.findOne({ where: { username: "liline57" } })
     .then((user) => {
       if (!user) {
-        bcrypt.hash(process.env.TESTPASSWORD, 10)
+        bcrypt.hash(process.env.PASSWORD, 10)
           .then((hash) => {
             db.User.create({
               username: "liline57",
